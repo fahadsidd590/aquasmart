@@ -70,7 +70,6 @@ export default function SettingsScreen() {
       <Text style={styles.controlButtonText}>{title}</Text>
     </TouchableOpacity>
   );
-
   return (
     <ScrollView style={styles.container}>
       {/* Automation Management */}
@@ -197,15 +196,17 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   controlButton: {
-    flex: 1,
+     flex: 1,
     alignItems: 'center',
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
   },
   controlButtonText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+    marginTop: theme.spacing.sm, // Add margin top instead of gap
+    textAlign: 'center', // Ensure text is centered
+
   },
 });
