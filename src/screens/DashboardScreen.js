@@ -33,7 +33,7 @@ export default function DashboardScreen({ navigation }) {
   const CITY = 'Karachi';
   const COUNTRY = 'PK';
   // Using OpenWeatherMap API (free tier: 60 calls/minute, 1,000,000 calls/month)
-  const API_KEY = 'f4c5a6f8c6b5e7d9a8b7c6d5e4f3g2h1'; // Demo key - replace with your own from https://openweathermap.org/api
+  const API_KEY = '4213fff239538dbc509dc355ea04e14a'; // Demo key - replace with your own from https://openweathermap.org/api
 
   const fetchWeatherData = async () => {
     try {
