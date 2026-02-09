@@ -64,12 +64,12 @@ export default function SettingsScreen() {
     </View>
   );
 
-  const ControlButton = ({ title, icon, color }) => (
-    <TouchableOpacity style={[styles.controlButton, { backgroundColor: color }]}>
-      <Icon name={icon} size={24} color="#fff" />
-      <Text style={styles.controlButtonText}>{title}</Text>
-    </TouchableOpacity>
-  );
+const ControlButton = ({ title, icon, color }) => (
+  <TouchableOpacity style={[styles.controlButton, { backgroundColor: color }]}>
+    <Icon name={icon} size={24} color="#fff" />
+    <Text style={styles.controlButtonText}>{title}</Text>
+  </TouchableOpacity>
+);
   return (
     <ScrollView style={styles.container}>
       {/* Automation Management */}
@@ -134,7 +134,7 @@ export default function SettingsScreen() {
             color={theme.colors.danger}
           />
           <ControlButton
-            title="Activate Purification"
+            title="Purify"
             icon="clean-hands"
             color={theme.colors.info}
           />
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   controlGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     gap: theme.spacing.md,
   },
   controlButton: {
