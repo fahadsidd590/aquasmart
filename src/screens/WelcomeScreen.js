@@ -21,7 +21,7 @@ export default function WelcomeScreen({ navigation }) {
           </View>
           <Text style={styles.title}>AquaSmart</Text>
           <Text style={styles.subtitle}>
-            IoT-Based Rainwater Harvesting System
+            IoT Based Water Harvesting System
           </Text>
         </View>
 
