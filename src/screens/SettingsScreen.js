@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,14 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
+import { useFocusEffect, CommonActions } from '@react-navigation/native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { getUser, clearSession } from '../services/authStorage';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   const [automationSettings, setAutomationSettings] = useState({
     autoFill: true,
     smartScheduling: true,
@@ -22,6 +25,54 @@ export default function SettingsScreen() {
     poorQuality: true,
     filterMaintenance: true,
   });
+
+  const [profile, setProfile] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const u = await getUser();
+        if (active) setProfile(u);
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const goFilterHistory = () => {
+    navigation.navigate('FilterHistory');
+  };
+
+  const onLogout = () => {
+    Alert.alert('Sign out', 'You will need to sign in again to use the app.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign out',
+        style: 'destructive',
+        onPress: async () => {
+          await clearSession();
+          const root = navigation.getParent()?.getParent();
+          if (root) {
+            root.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              })
+            );
+          } else {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              })
+            );
+          }
+        },
+      },
+    ]);
+  };
 
   const toggleAutomation = (key) => {
     setAutomationSettings({
@@ -72,6 +123,29 @@ const ControlButton = ({ title, icon, color }) => (
 );
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Account</Text>
+        {profile?.email ? (
+          <Text style={styles.accountEmail}>{profile.email}</Text>
+        ) : null}
+        <TouchableOpacity style={styles.accountRow} onPress={goFilterHistory} activeOpacity={0.7}>
+          <Icon name="history" size={22} color={theme.colors.primary} />
+          <View style={styles.accountRowText}>
+            <Text style={styles.accountRowTitle}>Filter change history</Text>
+            <Text style={styles.accountRowSub}>All updates to your water filters</Text>
+          </View>
+          <Icon name="chevron-right" size={22} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.divider} />
+        <TouchableOpacity style={styles.accountRow} onPress={onLogout} activeOpacity={0.7}>
+          <Icon name="logout" size={22} color={theme.colors.danger} />
+          <View style={styles.accountRowText}>
+            <Text style={[styles.accountRowTitle, { color: theme.colors.danger }]}>Sign out</Text>
+            <Text style={styles.accountRowSub}>Log out of this device</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
       {/* Automation Management */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Automation Management</Text>
@@ -165,6 +239,30 @@ const styles = StyleSheet.create({
     ...theme.typography.h3,
     marginBottom: theme.spacing.lg,
     color: theme.colors.text,
+  },
+  accountEmail: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
+  accountRowText: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+  },
+  accountRowTitle: {
+    ...theme.typography.h3,
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  accountRowSub: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
   settingItem: {
     flexDirection: 'row',

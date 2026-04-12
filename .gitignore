@@ -2,3 +2,7 @@
 /node_modules
 /.expo
 /backend/AquaSmart.Api/.vs
+/node_modules
+*.dll
+/backend/AquaSmart.Api/obj
+/node_modules

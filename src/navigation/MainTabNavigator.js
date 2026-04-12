@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DashboardScreen from '../screens/DashboardScreen';
 import QualityScreen from '../screens/QualityScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import SettingsStackNavigator from './SettingsStackNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -62,11 +62,12 @@ export default function MainTabNavigator() {
           title: 'Water Quality',
         }}
       />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen} 
+      <Tab.Screen
+        name="Settings"
+        component={SettingsStackNavigator}
         options={{
           title: 'Settings',
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

@@ -1,0 +1,84 @@
+erDiagram
+  APP_USER {
+    objectid _id PK
+    string name
+    string email
+    string emailNormalized
+    string passwordHash
+    string role
+    boolean isActive
+    datetime createdAtUtc
+    datetime lastLoginAtUtc
+  }
+
+  WATER_FILTER {
+    objectid _id PK
+    objectid userId FK
+    string name
+    string brand
+    string model
+    string serialNumber
+    datetime installDateUtc
+    datetime expireDateUtc
+    boolean isActive
+    string notes
+    datetime createdAtUtc
+    datetime updatedAtUtc
+    objectid createdByAdminId FK
+  }
+
+  FILTER_HISTORY {
+    objectid _id PK
+    objectid filterId FK
+    objectid userId FK
+    string action
+    string details
+    objectid actorUserId FK
+    datetime atUtc
+  }
+
+  SENSOR_READING {
+    objectid _id PK
+    string deviceId
+    string sensorType
+    double value
+    string unit
+    string status
+    datetime recordedAtUtc
+    datetime receivedAtUtc
+  }
+
+  DEVICE_SETTINGS {
+    objectid _id PK
+    string deviceId
+    boolean autoFill
+    boolean smartScheduling
+    boolean overflowProtection
+    boolean lowTankAlert
+    boolean poorQualityAlert
+    boolean filterMaintenanceAlert
+    datetime updatedAtUtc
+  }
+
+  CONTROL_ACTION_LOG {
+    objectid _id PK
+    string deviceId
+    string action
+    string triggeredBy
+    string notes
+    datetime createdAtUtc
+  }
+
+  IOT_DEVICE {
+    string deviceId PK
+  }
+
+  APP_USER ||--o{ WATER_FILTER : "userId"
+  APP_USER ||--o{ WATER_FILTER : "createdByAdminId"
+  WATER_FILTER ||--o{ FILTER_HISTORY : "filterId"
+  APP_USER ||--o{ FILTER_HISTORY : "userId"
+  APP_USER ||--o{ FILTER_HISTORY : "actorUserId"
+
+  IOT_DEVICE ||--o{ SENSOR_READING : "deviceId"
+  IOT_DEVICE ||--o{ DEVICE_SETTINGS : "deviceId"
+  IOT_DEVICE ||--o{ CONTROL_ACTION_LOG : "deviceId"

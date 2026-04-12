@@ -1,0 +1,133 @@
+============ TABLES =================
+users — app users and roles
+devices — physical hardware (gateways/controllers)
+sensors — measurement channels attached to devices
+readings — time-series sensor data (primary time-series collection)
+alerts — triggered events/notifications
+settings — global templates / user preferences
+sessions — short-lived auth/session tokens (optional)
+auditLogs — changes / important actions (optional)
+-------------------TABLE DISCRIPTION ------------------
+users
+_id: ObjectId
+name: string
+email: string (unique, indexed)
+passwordHash: string
+role: string (e.g., admin, user, viewer)
+phone: string (optional)
+preferences: object (uiTheme, notificationsEnabled, defaultLocation, etc.)
+createdAt: ISODate
+updatedAt: ISODate
+isActive: boolean
+organizationId: ObjectId (optional, for multi-tenant)
+Indexes: { email: 1 } unique; { organizationId: 1 } if multi-tenant
+
+devices
+
+_id: ObjectId
+name: string
+serialNumber: string (unique)
+model: string
+firmwareVersion: string
+location: { type: "Point", coordinates: [lon, lat] } (optional GeoJSON)
+lastSeen: ISODate
+status: string (online/offline)
+ownerId: ObjectId -> users._id
+metadata: object (manufacturer, installDate, notes)
+sensors: [ { sensorId: ObjectId, port: string } ] (optional embedding of relations)
+createdAt, updatedAt
+Indexes: { serialNumber: 1 } unique; { ownerId: 1 }; { "location": "2dsphere" } if geo queries
+
+
+sensors
+
+_id: ObjectId
+deviceId: ObjectId -> devices._id
+name: string (e.g., "pH Probe #1")
+channel: string or number
+type: string (e.g., ph, temperature, turbidity, or composite)
+units: string (e.g., "°C", "pH")
+serialNumber: string (optional)
+calibration: { date: ISODate, offset: number, scale: number, notes: string }
+thresholds: { warn: number, critical: number, direction: "above"|"below" } or template reference
+tags: [string]
+status: string
+createdAt, updatedAt
+Indexes: { deviceId: 1 }; { type: 1 }; { tags: 1 }
+
+readings (time-series)
+
+_id: ObjectId
+sensorId: ObjectId -> sensors._id (indexed)
+deviceId: ObjectId -> devices._id (optional denormalization)
+timestamp: ISODate (indexed, required)
+values: object — flexible container for one or multiple metrics, e.g. { ph: 7.2, temp: 23.4 }
+unit: string (if single value)
+quality: string (ok, suspect, error)
+battery: number (optional)
+rssi: number (optional)
+rawPayload: object (optional)
+processed: object (derived fields, e.g., rollingAverage)
+createdAt: ISODate
+Indexes:
+
+Compound: { sensorId: 1, timestamp: -1 } — main for recent queries and range scans
+TTL index on auxiliary data if you want auto-expire rawPayload: { createdAt: 1 } with expireAfterSeconds
+Consider MongoDB time-series collections feature (timeseries) for readings to optimize storage and queries.
+
+alerts
+
+_id: ObjectId
+sensorId: ObjectId
+deviceId: ObjectId (optional)
+userId: ObjectId (who should receive or created it)
+type: string (threshold, offline, anomaly, maintenance)
+severity: string (info, warn, critical)
+message: string
+metadata: object (measuredValue, thresholdValue, window)
+triggeredAt: ISODate
+resolvedAt: ISODate (nullable)
+acknowledged: boolean
+acknowledgedBy: ObjectId
+createdAt, updatedAt
+Indexes: { sensorId:1 }, { userId:1 }, { triggeredAt: -1 }
+
+settings
+
+_id: ObjectId
+scope: string ("global" | "organization" | "user")
+ownerId: ObjectId (if scope != global)
+key: string
+value: object
+updatedAt: ISODate
+Indexes: { scope:1, ownerId:1, key:1 } compound
+
+sessions (optional)
+
+_id: ObjectId
+userId: ObjectId
+tokenHash: string
+createdAt: ISODate
+expiresAt: ISODate
+ip: string
+userAgent: string
+Indexes: { tokenHash:1 }, TTL on expiresAt
+
+auditLogs (optional)
+
+_id: ObjectId
+userId: ObjectId
+action: string
+resource: { type: string, id: ObjectId }
+before: object
+after: object
+timestamp: ISODate
+ip: string
+Indexes: { userId:1, timestamp:-1 }
+
+=========================Relationships================
+sensors.deviceId -> devices._id
+devices.ownerId -> users._id
+readings.sensorId -> sensors._id (primary time-series join)
+alerts.sensorId, alerts.userId -> referenced collections
+Use ObjectId references for joins; duplicate small denormalized fields (deviceId in readings) for faster queries.

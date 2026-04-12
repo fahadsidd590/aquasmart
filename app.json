@@ -11,6 +11,12 @@
     ],
     "android": {
       "package": "com.fahadmujtaba.aquasmart"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5312f251-2177-4396-b509-3d11afdfbeec"
+      }
+    },
+    "owner": "fahad_mujtaba"
   }
 }

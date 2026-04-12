@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { apiRequest } from '../config/api';
+import { getToken } from '../services/authStorage';
 
 export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [filterAlert, setFilterAlert] = useState(null);
   const [systemData, setSystemData] = useState({
     tankLevel: 75,
     litersAvailable: 5625,
@@ -81,16 +85,34 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  const loadFilterAlert = useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        setFilterAlert(null);
+        return;
+      }
+      const data = await apiRequest('/api/me/filter-alert', { token });
+      setFilterAlert(data);
+    } catch {
+      setFilterAlert(null);
+    }
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true);
-    // Refresh both system data and weather
     fetchWeatherData();
-    
-    // Simulate API call for system data
+    loadFilterAlert();
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFilterAlert();
+    }, [loadFilterAlert])
+  );
 
   useEffect(() => {
     fetchWeatherData();
@@ -138,6 +160,14 @@ export default function DashboardScreen({ navigation }) {
     return <Icon name={iconMap[icon] || 'wb-sunny'} size={size} color="#FFA726" />;
   };
 
+  const filterBannerStyle = () => {
+    const s = filterAlert?.overallStatus;
+    if (s === 'ExpiredNeedChange') return { backgroundColor: '#fdecea', borderColor: '#f28b82' };
+    if (s === 'ExpiringSoon') return { backgroundColor: '#fff8e6', borderColor: '#fbc02d' };
+    if (s === 'Ok') return { backgroundColor: '#e6f4ea', borderColor: '#81c784' };
+    return { backgroundColor: '#f5f5f5', borderColor: '#e0e0e0' };
+  };
+
   const getWeatherAdvice = (weather) => {
     if (!weather) return '';
     
@@ -167,6 +197,24 @@ export default function DashboardScreen({ navigation }) {
         />
       }
     >
+      {filterAlert && (filterAlert.filters?.length > 0 || filterAlert.overallStatus !== 'None') ? (
+        <View style={[styles.filterBanner, filterBannerStyle()]}>
+          <View style={styles.filterBannerHeader}>
+            <Icon name="filter-list" size={22} color={theme.colors.primary} />
+            <Text style={styles.filterBannerTitle}>Water filter</Text>
+          </View>
+          <Text style={styles.filterBannerMessage}>{filterAlert.message}</Text>
+          {filterAlert.filters?.map((f) => (
+            <View key={f.id} style={styles.filterRow}>
+              <Text style={styles.filterRowName}>{f.name}</Text>
+              <Text style={styles.filterRowMeta}>
+                Expires: {new Date(f.expireDateUtc).toLocaleDateString()} · {f.status}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {/* Weather Forecast Card */}
       <View style={styles.card}>
         <View style={styles.weatherHeader}>
@@ -209,7 +257,7 @@ export default function DashboardScreen({ navigation }) {
             <View style={styles.weatherDetails}>
               <View style={styles.weatherDetailRow}>
                 <View style={styles.weatherDetailItem}>
-                  <Icon name="water-drop" size={18} color={theme.colors.info} />
+                  <Icon name="opacity" size={18} color={theme.colors.info} />
                   <Text style={styles.weatherDetailValue}>{weatherData.humidity}%</Text>
                   <Text style={styles.weatherDetailLabel}>Humidity</Text>
                 </View>
@@ -340,6 +388,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  filterBanner: {
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+  },
+  filterBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  filterBannerTitle: {
+    ...theme.typography.h3,
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.text,
+  },
+  filterBannerMessage: {
+    ...theme.typography.body,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  filterRow: {
+    paddingVertical: theme.spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
+  },
+  filterRowName: {
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  filterRowMeta: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
   },
   card: {
     backgroundColor: theme.colors.card,

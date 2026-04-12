@@ -1,0 +1,106 @@
+@AquaSmart.Api_HostAddress = http://localhost:5119
+
+GET {{AquaSmart.Api_HostAddress}}/
+Accept: application/json
+
+###
+
+POST {{AquaSmart.Api_HostAddress}}/api/sensorreadings
+Content-Type: application/json
+
+{
+  "deviceId": "esp32-01",
+  "sensorType": "ph",
+  "value": 7.2,
+  "unit": "pH",
+  "status": "Normal",
+  "metadata": {
+    "location": "Tank-A"
+  },
+  "recordedAtUtc": "2026-03-23T14:00:00Z"
+}
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/sensorreadings/history?deviceId=esp32-01&page=1&pageSize=50
+Accept: application/json
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/sensorreadings/latest/esp32-01
+Accept: application/json
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/dashboard/esp32-01
+Accept: application/json
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/quality/esp32-01
+Accept: application/json
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/settings/esp32-01
+Accept: application/json
+
+###
+
+PUT {{AquaSmart.Api_HostAddress}}/api/settings/esp32-01
+Content-Type: application/json
+
+{
+  "autoFill": true,
+  "smartScheduling": true,
+  "overflowProtection": true,
+  "lowTankAlert": true,
+  "poorQualityAlert": true,
+  "filterMaintenanceAlert": true
+}
+
+###
+
+POST {{AquaSmart.Api_HostAddress}}/api/controlactions
+Content-Type: application/json
+
+{
+  "deviceId": "esp32-01",
+  "action": "Start Pump",
+  "triggeredBy": "mobile-app",
+  "notes": "Manual test"
+}
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/controlactions/history?deviceId=esp32-01&page=1&pageSize=50
+Accept: application/json
+
+###
+
+POST {{AquaSmart.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "admin@aquasmart.com",
+  "password": "Admin@123",
+  "role": "Admin"
+}
+
+###
+
+POST {{AquaSmart.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@aquasmart.com",
+  "password": "Admin@123"
+}
+
+###
+
+GET {{AquaSmart.Api_HostAddress}}/api/users?page=1&pageSize=20
+Accept: application/json
+
+###

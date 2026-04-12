@@ -8,18 +8,41 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { apiRequest } from '../config/api';
+import { saveSession } from '../services/authStorage';
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('your@email.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Add authentication logic here
-    navigation.navigate('Main');
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Login', 'Please enter email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: { email: email.trim(), password },
+      });
+      if (!data?.accessToken) {
+        throw new Error('No access token returned from server.');
+      }
+      await saveSession(data.accessToken, data.user);
+      navigation.navigate('Main');
+    } catch (e) {
+      Alert.alert('Login failed', e.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,8 +116,16 @@ export default function LoginScreen({ navigation }) {
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login →</Text>
+          <TouchableOpacity
+            style={[styles.loginButton, loading && { opacity: 0.7 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login →</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
