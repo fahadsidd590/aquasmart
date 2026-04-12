@@ -1,3 +1,4 @@
 /admin-web/node_modules
 /node_modules
 /.expo
+/backend/AquaSmart.Api/.vs
