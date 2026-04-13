@@ -1,0 +1,59 @@
+@startuml AquaSmart_Use_Cases
+skinparam shadowing false
+skinparam actorStyle awesome
+left to right direction
+
+actor "App user\n(mobile)" as AppUser
+actor "Administrator" as Admin
+actor "Super administrator" as SuperAdmin
+actor "IoT device\n(ESP / sensor)" as IoT
+
+rectangle "Mobile app (Expo)" {
+  usecase "Sign in" as UC_MLogin
+  usecase "Register\n(app user)" as UC_MReg
+  usecase "View dashboard\nand weather" as UC_MDash
+  usecase "View filter status\nand expiry alerts" as UC_MFilter
+  usecase "View water quality" as UC_MQual
+  usecase "Adjust settings\nand manual controls" as UC_MSet
+  usecase "View filter\nchange history" as UC_MHist
+  usecase "Sign out" as UC_MOut
+}
+
+rectangle "Admin web (Vite)" {
+  usecase "Admin sign in" as UC_ALogin
+  usecase "View admin dashboard\n(users / filters summary)" as UC_ADash
+  usecase "Create or update\napp users" as UC_AUsers
+  usecase "Assign or update\nwater filters" as UC_AFilters
+  usecase "View filter history\n(per filter)" as UC_AFHist
+}
+
+rectangle "Backend API" {
+  usecase "Bootstrap first\nSuperAdmin (one-time)" as UC_Boot
+  usecase "Receive sensor\nreadings" as UC_Read
+}
+
+AppUser --> UC_MLogin
+AppUser --> UC_MReg
+AppUser --> UC_MDash
+AppUser --> UC_MFilter
+AppUser --> UC_MQual
+AppUser --> UC_MSet
+AppUser --> UC_MHist
+AppUser --> UC_MOut
+
+Admin --> UC_ALogin
+Admin --> UC_ADash
+Admin --> UC_AUsers
+Admin --> UC_AFilters
+Admin --> UC_AFHist
+
+SuperAdmin --> UC_ALogin
+SuperAdmin --> UC_ADash
+SuperAdmin --> UC_AUsers
+SuperAdmin --> UC_AFilters
+SuperAdmin --> UC_AFHist
+SuperAdmin --> UC_Boot
+
+IoT --> UC_Read
+
+@enduml

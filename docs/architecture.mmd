@@ -1,0 +1,35 @@
+flowchart TB
+  subgraph actors["Actors"]
+    U[App user]
+    AD[Admin / SuperAdmin]
+    IOT[IoT device ESP32]
+  end
+
+  subgraph clients["Client tier"]
+    MOB["Mobile app Expo React Native"]
+    WEB["Admin web Vite React"]
+  end
+
+  subgraph api["AquaSmart.Api ASP.NET Core 9"]
+    CTRL["REST API Controllers"]
+    AUTH[JWT Bearer]
+    REPO[Repository layer]
+    CTRL --> AUTH
+    CTRL --> REPO
+  end
+
+  subgraph data["Data tier"]
+    MDB[("MongoDB")]
+  end
+
+  subgraph ext["External optional"]
+    WX[OpenWeatherMap]
+  end
+
+  U --> MOB
+  AD --> WEB
+  IOT -->|HTTPS sensor readings| CTRL
+  MOB -->|HTTPS JSON Bearer| CTRL
+  WEB -->|HTTPS dev proxy to api| CTRL
+  MOB -.->|dashboard weather| WX
+  REPO --> MDB

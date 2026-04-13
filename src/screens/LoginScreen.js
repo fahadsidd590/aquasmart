@@ -52,12 +52,6 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Icon name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Login to your account</Text>
         </View>
@@ -145,9 +139,6 @@ const styles = StyleSheet.create({
   header: {
     marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.xl * 2,
-  },
-  backButton: {
-    marginBottom: theme.spacing.lg,
   },
   title: {
     ...theme.typography.h1,

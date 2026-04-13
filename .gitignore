@@ -6,3 +6,6 @@
 *.dll
 /backend/AquaSmart.Api/obj
 /node_modules
+/backend/AquaSmart.Api/bin
+/backend/AquaSmart.Api/bin
+*.pdb
