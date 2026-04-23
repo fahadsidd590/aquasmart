@@ -9,3 +9,4 @@
 /backend/AquaSmart.Api/bin
 /backend/AquaSmart.Api/bin
 *.pdb
+/node_modules

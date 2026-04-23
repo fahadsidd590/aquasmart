@@ -3,6 +3,7 @@
     "name": "AquaSmart",
     "slug": "aquasmart",
     "version": "1.0.0",
+    "icon": "./assets/logo.png",
     "sdkVersion": "49.0.0",
     "platforms": [
       "ios",
@@ -10,7 +11,11 @@
       "web"
     ],
     "android": {
-      "package": "com.fahadmujtaba.aquasmart"
+      "package": "com.fahadmujtaba.aquasmart",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#ffffff"
+      }
     },
     "extra": {
       "eas": {

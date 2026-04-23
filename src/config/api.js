@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
  * Android emulator uses 10.0.2.2 instead (see devApiBaseUrl).
  */
 const DEV_API_PORT = 5119;
-const DEV_PC_LAN_HOST = '192.168.100.49';
+const DEV_PC_LAN_HOST = '10.109.29.26';
 
 function devApiBaseUrl() {
   if (Platform.OS === 'web') {

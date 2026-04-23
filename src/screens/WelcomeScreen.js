@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Image,
 } from 'react-native';
 import { theme } from '../styles/theme';
 
@@ -17,7 +18,11 @@ export default function WelcomeScreen({ navigation }) {
         {/* Header/Logo Section */}
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoIcon}>💧</Text>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.title}>AquaSmart</Text>
           <Text style={styles.subtitle}>
@@ -30,11 +35,11 @@ export default function WelcomeScreen({ navigation }) {
           <Text style={styles.description}>
             Monitor, Control & Save Water Intelligently
           </Text>
-          <View style={styles.waterDropContainer}>
+          {/* <View style={styles.waterDropContainer}>
             <Text style={styles.waterDrop}>💧</Text>
             <Text style={styles.waterDrop}>💧</Text>
             <Text style={styles.waterDrop}>💧</Text>
-          </View>
+          </View> */}
         </View>
 
         {/* Buttons */}
@@ -63,7 +68,7 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a73e8', // Solid blue background
+    backgroundColor: '#91b4ff', // Solid blue background
     width: '100%',
   },
   contentContainer: {
@@ -77,9 +82,9 @@ const styles = StyleSheet.create({
     marginTop: height * 0.1,
   },
   logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -87,8 +92,9 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  logoIcon: {
-    fontSize: 48,
+  logoImage: {
+    width: 150,
+    height: 150,
   },
   title: {
     ...theme.typography.h1,
