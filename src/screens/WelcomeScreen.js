@@ -24,7 +24,7 @@ export default function WelcomeScreen({ navigation }) {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.title}>AquaSmart</Text>
+          {/* <Text style={styles.title}>AquaSmart</Text> */}
           <Text style={styles.subtitle}>
             IoT Based Water Harvesting System
           </Text>
@@ -68,33 +68,33 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#91b4ff', // Solid blue background
+    backgroundColor: '#5a8eff', // Solid blue background
     width: '100%',
   },
   contentContainer: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.xl * 2,
+   // paddingVertical: theme.spacing.xl * 2,
     paddingHorizontal: theme.spacing.lg,
   },
   headerSection: {
     alignItems: 'center',
-    marginTop: height * 0.1,
+   // marginTop: height * 0.1,
   },
   logoContainer: {
-    width: 150,
-    height: 150,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+   // width: 200,
+   // height: 200,
+    //borderRadius: 100,
+    //backgroundColor: 'rgba(255, 255, 255, 0.2)',
+   // justifyContent: 'center',
+   // alignItems: 'center',
+    //marginBottom: theme.spacing.lg,
+   // borderWidth: 3,
+   // borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   logoImage: {
-    width: 150,
-    height: 150,
+    width: 280,
+    height:280,
   },
   title: {
     ...theme.typography.h1,
