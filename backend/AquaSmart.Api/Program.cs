@@ -21,6 +21,7 @@ builder.Services.AddSingleton<IControlActionRepository, ControlActionRepository>
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IWaterFilterRepository, WaterFilterRepository>();
 builder.Services.AddSingleton<IFilterHistoryRepository, FilterHistoryRepository>();
+builder.Services.AddSingleton<IAreaSensorStateRepository, AreaSensorStateRepository>();
 builder.Services.AddSingleton<ITokenService, JwtTokenService>();
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
@@ -112,6 +113,8 @@ app.MapGet("/", () => Results.Ok(new
         "POST /api/admin/filters",
         "PUT /api/admin/filters/{id}",
         "GET /api/admin/filters/{id}/history",
+        "POST /api/area-sensor-state",
+        "GET /api/area-sensor-state/current",
         "GET /swagger"
     }
 }));

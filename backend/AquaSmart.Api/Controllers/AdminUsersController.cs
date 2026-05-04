@@ -62,6 +62,7 @@ public sealed class AdminUsersController(IUserRepository userRepository) : Contr
             EmailNormalized = email.ToUpperInvariant(),
             Role = role,
             IsActive = request.IsActive,
+            AreaId = request.AreaId.GetValueOrDefault(),
             CreatedAtUtc = DateTime.UtcNow
         };
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -104,6 +105,11 @@ public sealed class AdminUsersController(IUserRepository userRepository) : Contr
             user.Role = newRole;
         }
 
+        if (request.AreaId.HasValue)
+        {
+            user.AreaId = request.AreaId.Value <= 0 ? 1 : request.AreaId.Value;
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -120,6 +126,7 @@ public sealed class AdminUsersController(IUserRepository userRepository) : Contr
         Email = user.Email,
         Role = user.Role,
         IsActive = user.IsActive,
+        AreaId = user.AreaId <= 0 ? 1 : user.AreaId,
         CreatedAtUtc = user.CreatedAtUtc,
         LastLoginAtUtc = user.LastLoginAtUtc
     };

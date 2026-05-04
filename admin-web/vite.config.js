@@ -1,20 +1,30 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Copy `.env.development.example` → `.env.development` and set VITE_API_PROXY_TARGET
-// to the same base URL you use for Swagger (e.g. http://192.168.100.49:5119).
+// `.env.development` lives next to this file (works even if `npm run dev` is started
+// from another working directory). Restart dev after env changes.
+// `VITE_API_PROXY_TARGET` is also exposed to the client as `import.meta.env.VITE_API_PROXY_TARGET`
+// so `src/api.js` can call that host directly (full URL in Network tab).
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:5119';
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const env = loadEnv(mode, __dirname, '');
+  const raw = env.VITE_API_PROXY_TARGET?.trim();
+  const apiTarget = raw || 'http://localhost:5119';
+
+  console.log(`[admin-web] dev proxy /api -> ${apiTarget}`);
 
   return {
     plugins: [react()],
     server: {
       port: 5173,
+      strictPort: false,
       proxy: {
         '/api': {
           target: apiTarget,
           changeOrigin: true,
+          secure: false,
         },
       },
     },

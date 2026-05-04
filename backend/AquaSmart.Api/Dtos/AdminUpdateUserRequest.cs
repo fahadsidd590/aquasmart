@@ -15,4 +15,6 @@ public sealed class AdminUpdateUserRequest
     [MinLength(6)]
     [MaxLength(100)]
     public string? Password { get; set; }
+
+    public int? AreaId { get; set; }
 }

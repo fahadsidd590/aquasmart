@@ -19,4 +19,6 @@ public sealed class MongoDbSettings
     public string WaterFiltersCollectionName { get; set; } = "water_filters";
 
     public string FilterHistoryCollectionName { get; set; } = "filter_history";
+
+    public string AreaSensorStateCollectionName { get; set; } = "area_sensor_state";
 }

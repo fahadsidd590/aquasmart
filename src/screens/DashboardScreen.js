@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,18 @@ import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
 import { apiRequest } from '../config/api';
-import { getToken } from '../services/authStorage';
+import { getToken, getUser } from '../services/authStorage';
+import { sensorPackageFingerprint, filterAlertFingerprint } from '../utils/liveDataFingerprint';
 
 export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [filterAlert, setFilterAlert] = useState(null);
+  const [sensorState, setSensorState] = useState(null);
+  const lastSensorFingerprint = useRef(null);
+  const lastFilterFingerprint = useRef(null);
   const [systemData, setSystemData] = useState({
-    tankLevel: 75,
-    litersAvailable: 5625,
     waterQuality: 'Good',
     filterStatus: 'Active',
     phLevel: 7.2,
@@ -85,24 +87,61 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  const loadFilterAlert = useCallback(async () => {
+  const loadFilterAlert = useCallback(async (force = false) => {
     try {
       const token = await getToken();
       if (!token) {
+        const fp = 'no-token';
+        if (!force && fp === lastFilterFingerprint.current) return;
+        lastFilterFingerprint.current = fp;
         setFilterAlert(null);
         return;
       }
       const data = await apiRequest('/api/me/filter-alert', { token });
+      const fp = filterAlertFingerprint(data);
+      if (!force && fp === lastFilterFingerprint.current) return;
+      lastFilterFingerprint.current = fp;
       setFilterAlert(data);
     } catch {
+      if (!force && lastFilterFingerprint.current === '__err__') return;
+      lastFilterFingerprint.current = '__err__';
       setFilterAlert(null);
+    }
+  }, []);
+
+  const loadAreaSensorState = useCallback(async (force = false) => {
+    try {
+      const me = await getUser();
+      const areaId = me?.areaId && me.areaId > 0 ? me.areaId : 1;
+      const data = await apiRequest(`/api/area-sensor-state/current?areaId=${areaId}`);
+      const fp = sensorPackageFingerprint(data);
+      if (!force && fp === lastSensorFingerprint.current) return;
+      lastSensorFingerprint.current = fp;
+      const state = data?.data || data;
+      setSensorState({ ...(state || {}), pumpData: data?.pumpData });
+      setSystemData((prev) => ({
+        ...prev,
+        phLevel: state?.ph ?? prev.phLevel,
+        tds: state?.tds ?? prev.tds,
+        turbidity: state?.turbidity ?? prev.turbidity,
+        waterQuality: state?.status || prev.waterQuality,
+        pumpStatus: data?.pumpData === 1 ? 'Running' : 'Stopped',
+        lastUpdated: state?.updatedAtUtc
+          ? new Date(state.updatedAtUtc).toLocaleString()
+          : prev.lastUpdated,
+      }));
+    } catch {
+      if (!force && lastSensorFingerprint.current === '__err__') return;
+      lastSensorFingerprint.current = '__err__';
+      setSensorState(null);
     }
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchWeatherData();
-    loadFilterAlert();
+    loadFilterAlert(true);
+    loadAreaSensorState(true);
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
@@ -110,8 +149,21 @@ export default function DashboardScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      loadFilterAlert();
-    }, [loadFilterAlert])
+      let alive = true;
+      const poll = () => {
+        if (!alive) return;
+        loadFilterAlert(false);
+        loadAreaSensorState(false);
+      };
+      poll();
+      const id = setInterval(poll, 2000);
+      return () => {
+        alive = false;
+        clearInterval(id);
+        lastSensorFingerprint.current = null;
+        lastFilterFingerprint.current = null;
+      };
+    }, [loadFilterAlert, loadAreaSensorState])
   );
 
   useEffect(() => {
@@ -309,23 +361,39 @@ export default function DashboardScreen({ navigation }) {
         )}
       </View>
 
-      {/* Tank Level Card */}
+      {/* Water tank — sensor: waterLevel "1" = full, "0" = not full */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Current Tank Level</Text>
-        <View style={styles.tankLevelContainer}>
-          <View style={styles.tankLevelBar}>
-            <View
-              style={[
-                styles.tankLevelFill,
-                { width: `${systemData.tankLevel}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.tankLevelText}>{systemData.tankLevel}%</Text>
-        </View>
-        <Text style={styles.litersText}>
-          {systemData.litersAvailable.toLocaleString()} Liters Available
-        </Text>
+        <Text style={styles.cardTitle}>Water tank</Text>
+        {(() => {
+          const wlRaw = sensorState?.waterLevel ?? sensorState?.WaterLevel;
+          const wl = wlRaw != null ? String(wlRaw).trim() : '';
+          const tankFull = wl === '1';
+          const tankLabel =
+            wl === '1'
+              ? 'Full'
+              : wl === '0'
+                ? 'Not full'
+                : sensorState
+                  ? 'No reading'
+                  : 'Waiting for sensor';
+          return (
+            <View style={styles.tankStatusBlock}>
+              <Icon
+                name={tankFull ? 'check-circle' : 'opacity'}
+                size={40}
+                color={tankFull ? theme.colors.success : theme.colors.primary}
+              />
+              <Text
+                style={[
+                  styles.tankStatusHeadline,
+                  tankFull && styles.tankStatusHeadlineFull,
+                ]}
+              >
+                {tankLabel}
+              </Text>
+            </View>
+          );
+        })()}
       </View>
 
       {/* Water Quality Card */}
@@ -339,7 +407,11 @@ export default function DashboardScreen({ navigation }) {
           <Icon name="chevron-right" size={24} color={theme.colors.text} />
         </View>
         <View style={styles.qualityBadge}>
-          <Icon name="check-circle" size={20} color={theme.colors.success} />
+          <Icon
+            name={systemData.waterQuality === 'NOT_SAFE' ? 'error' : 'check-circle'}
+            size={20}
+            color={systemData.waterQuality === 'NOT_SAFE' ? theme.colors.danger : theme.colors.success}
+          />
           <Text style={styles.qualityText}>{systemData.waterQuality}</Text>
         </View>
         <Text style={styles.filterStatus}>
@@ -351,10 +423,15 @@ export default function DashboardScreen({ navigation }) {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Quick Readings</Text>
         <View style={styles.quickReadingsGrid}>
-          <QuickReading label="pH Level" value={7.2} unit="" icon="science" />
-          <QuickReading label="TDS" value={145} unit="ppm" icon="science" />
-          <QuickReading label="Turbidity" value={2.5} unit="NTU" icon="opacity" />
-          <QuickReading label="Temperature" value={24} unit="°C" icon="device-thermostat" />
+          <QuickReading label="pH Level" value={systemData.phLevel} unit="" icon="science" />
+          <QuickReading label="TDS" value={systemData.tds} unit="ppm" icon="science" />
+          <QuickReading label="Turbidity" value={systemData.turbidity} unit="NTU" icon="opacity" />
+          <QuickReading
+            label="Area ID"
+            value={sensorState?.areaId ?? 1}
+            unit=""
+            icon="place"
+          />
         </View>
       </View>
 
@@ -592,33 +669,21 @@ const styles = StyleSheet.create({
   },
   
   // Existing styles for other components
-  tankLevelContainer: {
+  tankStatusBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  tankLevelBar: {
-    flex: 1,
-    height: 20,
-    backgroundColor: '#e8f0fe',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginRight: theme.spacing.md,
-  },
-  tankLevelFill: {
-    height: '100%',
-    backgroundColor: theme.colors.primary,
-    borderRadius: 10,
-  },
-  tankLevelText: {
+  tankStatusHeadline: {
     ...theme.typography.h2,
-    fontSize: 24,
-    color: theme.colors.primary,
+    fontSize: 26,
+    color: theme.colors.text,
+    fontWeight: '700',
+    flex: 1,
   },
-  litersText: {
-    ...theme.typography.caption,
-    fontSize: 16,
-    color: theme.colors.textSecondary,
+  tankStatusHeadlineFull: {
+    color: theme.colors.success,
   },
   qualityHeader: {
     flexDirection: 'row',
@@ -636,7 +701,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   qualityText: {
-    color: theme.colors.success,
+    color: theme.colors.text,
     fontWeight: '600',
     marginLeft: theme.spacing.sm,
   },

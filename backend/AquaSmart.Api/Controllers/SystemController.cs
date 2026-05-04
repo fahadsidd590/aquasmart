@@ -66,6 +66,7 @@ public sealed class SystemController(
             Email = created.Email,
             Role = created.Role,
             IsActive = created.IsActive,
+            AreaId = created.AreaId <= 0 ? 1 : created.AreaId,
             CreatedAtUtc = created.CreatedAtUtc,
             LastLoginAtUtc = created.LastLoginAtUtc
         });

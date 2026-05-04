@@ -23,6 +23,18 @@ public sealed class ControlActionRepository : IControlActionRepository
         return action;
     }
 
+    public async Task<ControlActionLog?> GetLatestAsync(string? deviceId = null, CancellationToken cancellationToken = default)
+    {
+        var filter = string.IsNullOrWhiteSpace(deviceId)
+            ? Builders<ControlActionLog>.Filter.Empty
+            : Builders<ControlActionLog>.Filter.Eq(x => x.DeviceId, deviceId.Trim());
+
+        return await _collection
+            .Find(filter)
+            .SortByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ControlActionLog>> GetHistoryAsync(
         string? deviceId,
         int limit,

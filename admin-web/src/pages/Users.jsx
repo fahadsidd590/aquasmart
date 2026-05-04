@@ -13,7 +13,9 @@ export default function Users() {
     password: '',
     role: 'User',
     isActive: true,
+    areaId: '',
   });
+  const [areaEdits, setAreaEdits] = useState({});
 
   const load = async () => {
     try {
@@ -34,9 +36,12 @@ export default function Users() {
     try {
       await api('/api/admin/users', {
         method: 'POST',
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          areaId: form.areaId === '' ? undefined : Number(form.areaId),
+        }),
       });
-      setForm({ name: '', email: '', password: '', role: 'User', isActive: true });
+      setForm({ name: '', email: '', password: '', role: 'User', isActive: true, areaId: '' });
       await load();
     } catch (err) {
       setError(err.body?.message || err.message);
@@ -48,6 +53,23 @@ export default function Users() {
       await api(`/api/admin/users/${u.id}`, {
         method: 'PUT',
         body: JSON.stringify({ isActive: !u.isActive }),
+      });
+      await load();
+    } catch (err) {
+      setError(err.body?.message || err.message);
+    }
+  };
+
+  const saveAreaId = async (u) => {
+    const nextAreaId = Number(areaEdits[u.id]);
+    if (!Number.isFinite(nextAreaId) || nextAreaId <= 0) {
+      setError('Area ID must be a positive number.');
+      return;
+    }
+    try {
+      await api(`/api/admin/users/${u.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ areaId: nextAreaId }),
       });
       await load();
     } catch (err) {
@@ -121,6 +143,14 @@ export default function Users() {
           />
           Active
         </label>
+        <input
+          placeholder="Area ID (optional, auto if empty)"
+          type="number"
+          min="1"
+          value={form.areaId}
+          onChange={(e) => setForm({ ...form, areaId: e.target.value })}
+          style={{ padding: 10, borderRadius: 8, border: '1px solid #ccc' }}
+        />
         <button
           type="submit"
           style={{
@@ -143,6 +173,7 @@ export default function Users() {
               <th style={{ padding: 10 }}>Name</th>
               <th style={{ padding: 10 }}>Email</th>
               <th style={{ padding: 10 }}>Role</th>
+              <th style={{ padding: 10 }}>Area ID</th>
               <th style={{ padding: 10 }}>Active</th>
               <th style={{ padding: 10 }} />
             </tr>
@@ -153,6 +184,20 @@ export default function Users() {
                 <td style={{ padding: 10 }}>{u.name}</td>
                 <td style={{ padding: 10 }}>{u.email}</td>
                 <td style={{ padding: 10 }}>{u.role}</td>
+                <td style={{ padding: 10 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="number"
+                      min="1"
+                      value={areaEdits[u.id] ?? u.areaId ?? 1}
+                      onChange={(e) => setAreaEdits((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                      style={{ width: 90, padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+                    />
+                    <button type="button" onClick={() => saveAreaId(u)}>
+                      Save
+                    </button>
+                  </div>
+                </td>
                 <td style={{ padding: 10 }}>{u.isActive ? 'Yes' : 'No'}</td>
                 <td style={{ padding: 10 }}>
                   <button type="button" onClick={() => toggleActive(u)}>

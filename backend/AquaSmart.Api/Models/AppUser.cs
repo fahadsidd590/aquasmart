@@ -32,4 +32,7 @@ public sealed class AppUser
 
     [BsonElement("lastLoginAtUtc")]
     public DateTime? LastLoginAtUtc { get; set; }
+
+    [BsonElement("areaId")]
+    public int AreaId { get; set; } = 1;
 }

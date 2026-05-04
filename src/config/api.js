@@ -5,26 +5,26 @@ import Constants from 'expo-constants';
  * PC LAN IP (same Wi‑Fi as the phone). Change if your router assigns a different IP.
  * Android emulator uses 10.0.2.2 instead (see devApiBaseUrl).
  */
-const DEV_API_PORT = 5119;
-const DEV_PC_LAN_HOST = '10.109.29.26';
+const DEV_API_PORT = '';
+const DEV_PC_LAN_HOST = 'http://aquasmart.somee.com';
 
 function devApiBaseUrl() {
   if (Platform.OS === 'web') {
-    return `http://localhost:${DEV_API_PORT}`;
+    return `http://aquasmart.somee.com`;
   }
   if (Platform.OS === 'ios' && !Constants.isDevice) {
-    return `http://localhost:${DEV_API_PORT}`;
+    return `http://aquasmart.somee.com`;
   }
   if (Platform.OS === 'android' && !Constants.isDevice) {
-    return `http://10.0.2.2:${DEV_API_PORT}`;
+    return `http://aquasmart.somee.com`;
   }
-  return `http://${DEV_PC_LAN_HOST}:${DEV_API_PORT}`;
+  return `http://aquasmart.somee.com`;
 }
 
 /**
  * Base URL for the .NET API (see backend/AquaSmart.Api).
  */
-export const API_BASE_URL = __DEV__ ? devApiBaseUrl() : 'https://your-production-api.example';
+export const API_BASE_URL = __DEV__ ? devApiBaseUrl() : 'http://aquasmart.somee.com';
 
 export async function apiRequest(path, { token, method = 'GET', body } = {}) {
   const headers = { 'Content-Type': 'application/json' };

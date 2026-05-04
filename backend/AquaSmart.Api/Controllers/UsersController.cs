@@ -43,6 +43,7 @@ public sealed class UsersController(IUserRepository userRepository) : Controller
         Email = user.Email,
         Role = user.Role,
         IsActive = user.IsActive,
+        AreaId = user.AreaId <= 0 ? 1 : user.AreaId,
         CreatedAtUtc = user.CreatedAtUtc,
         LastLoginAtUtc = user.LastLoginAtUtc
     };

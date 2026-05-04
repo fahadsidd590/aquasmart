@@ -1,20 +1,114 @@
-import React from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { apiRequest } from '../config/api';
+import { getUser } from '../services/authStorage';
+import { sensorPackageFingerprint } from '../utils/liveDataFingerprint';
 
 export default function QualityScreen() {
-  const sensorData = [
-    { label: 'pH Level', value: '7.2', status: 'Normal', icon: 'science' },
-    { label: 'Turbidity', value: '2.5 NTU', status: 'Clear', icon: 'opacity' },
-    { label: 'TDS', value: '145 ppm', status: 'Good', icon: 'science' },
-    { label: 'Temperature', value: '24°C', status: 'Optimal', icon: 'device-thermostat' },
-  ];
+  const lastSensorFingerprint = useRef(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [quality, setQuality] = useState({
+    status: 'Unknown',
+    description: 'No sensor reading yet',
+    decisionTitle: 'Waiting for Sensor Data',
+    decisionDescription: 'Please send readings from ESP first.',
+    decisionUse: 'Area based live quality will appear here.',
+    areaId: 1,
+    metrics: [
+      { label: 'pH Level', value: 'N/A', status: 'Unknown', icon: 'science' },
+      { label: 'Turbidity', value: 'N/A', status: 'Unknown', icon: 'opacity' },
+      { label: 'TDS', value: 'N/A', status: 'Unknown', icon: 'science' },
+      { label: 'Clean Valve', value: 'N/A', status: 'Unknown', icon: 'settings-input-component' },
+      { label: 'Dirty Valve', value: 'N/A', status: 'Unknown', icon: 'settings-input-component' },
+    ],
+  });
+
+  const loadAreaQuality = useCallback(async (force = false) => {
+    const me = await getUser();
+    const areaId = me?.areaId && me.areaId > 0 ? me.areaId : 1;
+    try {
+      const response = await apiRequest(`/api/area-sensor-state/current?areaId=${areaId}`);
+      const fp = sensorPackageFingerprint(response);
+      if (!force && fp === lastSensorFingerprint.current) return;
+      lastSensorFingerprint.current = fp;
+      const state = response?.data || response;
+      const status = state?.status || 'Unknown';
+      setQuality({
+        status,
+        description: status === 'NOT_SAFE' ? 'Water is not safe for use' : 'Water quality within acceptable range',
+        decisionTitle: status === 'NOT_SAFE' ? 'Water Quality Alert' : 'Water Quality Approved',
+        decisionDescription:
+          status === 'NOT_SAFE'
+            ? 'One or more values are outside acceptable range'
+            : 'All values are in expected range',
+        decisionUse:
+          status === 'NOT_SAFE'
+            ? 'Run treatment before using this water'
+            : 'Suitable for non-potable use',
+        areaId,
+        metrics: [
+          { label: 'pH Level', value: `${state?.ph ?? 'N/A'}`, status, icon: 'science' },
+          { label: 'Turbidity', value: `${state?.turbidity ?? 'N/A'} NTU`, status, icon: 'opacity' },
+          { label: 'TDS', value: `${state?.tds ?? 'N/A'} ppm`, status, icon: 'science' },
+          {
+            label: 'Tank',
+            value: (() => {
+              const w = state?.waterLevel ?? state?.WaterLevel;
+              const s = w != null ? String(w).trim() : '';
+              if (s === '1') return 'Full';
+              if (s === '0') return 'Not full';
+              return 'No reading';
+            })(),
+            status: (() => {
+              const w = state?.waterLevel ?? state?.WaterLevel;
+              const s = w != null ? String(w).trim() : '';
+              if (s === '1') return 'Full';
+              if (s === '0') return 'Low';
+              return 'Unknown';
+            })(),
+            icon: 'opacity',
+          },
+          { label: 'Clean Valve', value: state?.cleanValve || 'N/A', status: state?.cleanValve || 'Unknown', icon: 'settings-input-component' },
+          { label: 'Dirty Valve', value: state?.dirtyValve || 'N/A', status: state?.dirtyValve || 'Unknown', icon: 'settings-input-component' },
+        ],
+      });
+    } catch {
+      if (!force && lastSensorFingerprint.current === '__err__') return;
+      lastSensorFingerprint.current = '__err__';
+      setQuality((prev) => ({ ...prev, areaId }));
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      const poll = () => {
+        if (alive) loadAreaQuality(false);
+      };
+      poll();
+      const id = setInterval(poll, 2000);
+      return () => {
+        alive = false;
+        clearInterval(id);
+        lastSensorFingerprint.current = null;
+      };
+    }, [loadAreaQuality])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadAreaQuality(true);
+    setRefreshing(false);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -26,23 +120,39 @@ export default function QualityScreen() {
       case 'Warning':
         return theme.colors.warning;
       case 'Poor':
+      case 'NOT_SAFE':
+      case 'OFF':
         return theme.colors.danger;
+      case 'ON':
+      case 'SAFE':
+      case 'Good':
+      case 'Full':
+        return theme.colors.success;
+      case 'Low':
+        return theme.colors.warning;
       default:
         return theme.colors.textSecondary;
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+    >
       {/* Overall Quality Card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Overall Quality</Text>
         <View style={styles.overallQuality}>
-          <Icon name="check-circle" size={40} color={theme.colors.success} />
+          <Icon
+            name={quality.status === 'NOT_SAFE' ? 'error' : 'check-circle'}
+            size={40}
+            color={quality.status === 'NOT_SAFE' ? theme.colors.danger : theme.colors.success}
+          />
           <View style={styles.qualityContent}>
-            <Text style={styles.qualityStatus}>Good</Text>
+            <Text style={styles.qualityStatus}>{quality.status}</Text>
             <Text style={styles.qualityDescription}>
-              Safe for non-potable use
+              {quality.description} (Area {quality.areaId})
             </Text>
           </View>
         </View>
@@ -52,7 +162,7 @@ export default function QualityScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Detailed Sensor Data</Text>
         <View style={styles.sensorGrid}>
-          {sensorData.map((sensor, index) => (
+          {quality.metrics.map((sensor, index) => (
             <View key={index} style={styles.sensorItem}>
               <View style={styles.sensorHeader}>
                 <Icon name={sensor.icon} size={20} color={theme.colors.primary} />
@@ -86,12 +196,12 @@ export default function QualityScreen() {
         <View style={styles.decisionCard}>
           <Icon name="verified" size={24} color={theme.colors.success} />
           <View style={styles.decisionContent}>
-            <Text style={styles.decisionTitle}>Water Quality Approved</Text>
+            <Text style={styles.decisionTitle}>{quality.decisionTitle}</Text>
             <Text style={styles.decisionDescription}>
-              All parameters within acceptable range
+              {quality.decisionDescription}
             </Text>
             <Text style={styles.decisionUse}>
-              For non-potable use, Suitable for gardening, cleaning, and flushing
+              {quality.decisionUse}
             </Text>
           </View>
         </View>

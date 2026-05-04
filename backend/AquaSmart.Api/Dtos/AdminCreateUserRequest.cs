@@ -23,4 +23,6 @@ public sealed class AdminCreateUserRequest
     public string Role { get; set; } = Authorization.Roles.User;
 
     public bool IsActive { get; set; } = true;
+
+    public int? AreaId { get; set; }
 }

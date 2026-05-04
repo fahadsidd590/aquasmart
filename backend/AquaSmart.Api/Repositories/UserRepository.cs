@@ -8,6 +8,7 @@ namespace AquaSmart.Api.Repositories;
 public sealed class UserRepository : IUserRepository
 {
     private readonly IMongoCollection<AppUser> _collection;
+    private readonly IMongoCollection<CounterDocument> _counterCollection;
 
     public UserRepository(IOptions<MongoDbSettings> settings)
     {
@@ -15,6 +16,7 @@ public sealed class UserRepository : IUserRepository
         var client = new MongoClient(mongoSettings.ConnectionString);
         var database = client.GetDatabase(mongoSettings.DatabaseName);
         _collection = database.GetCollection<AppUser>(mongoSettings.UsersCollectionName);
+        _counterCollection = database.GetCollection<CounterDocument>("counters");
 
         var uniqueEmailIndex = new CreateIndexModel<AppUser>(
             Builders<AppUser>.IndexKeys.Ascending(x => x.EmailNormalized),
@@ -47,6 +49,11 @@ public sealed class UserRepository : IUserRepository
 
     public async Task<AppUser> CreateAsync(AppUser user, CancellationToken cancellationToken = default)
     {
+        if (user.AreaId <= 0)
+        {
+            user.AreaId = await GetNextAreaIdAsync(cancellationToken);
+        }
+
         await _collection.InsertOneAsync(user, cancellationToken: cancellationToken);
         return user;
     }
@@ -94,5 +101,33 @@ public sealed class UserRepository : IUserRepository
         }
 
         return parts.Count == 0 ? builder.Empty : builder.And(parts);
+    }
+
+    private async Task<int> GetNextAreaIdAsync(CancellationToken cancellationToken)
+    {
+        var filter = Builders<CounterDocument>.Filter.Eq(x => x.Id, "areaId");
+        var update = Builders<CounterDocument>.Update.Inc(x => x.Sequence, 1);
+        var options = new FindOneAndUpdateOptions<CounterDocument>
+        {
+            IsUpsert = true,
+            ReturnDocument = ReturnDocument.After
+        };
+
+        var counter = await _counterCollection.FindOneAndUpdateAsync(
+            filter,
+            update,
+            options,
+            cancellationToken);
+
+        return counter.Sequence <= 0 ? 1 : counter.Sequence;
+    }
+
+    private sealed class CounterDocument
+    {
+        [MongoDB.Bson.Serialization.Attributes.BsonId]
+        public string Id { get; set; } = string.Empty;
+
+        [MongoDB.Bson.Serialization.Attributes.BsonElement("sequence")]
+        public int Sequence { get; set; }
     }
 }

@@ -12,6 +12,8 @@ public sealed class UserResponse
 
     public bool IsActive { get; set; }
 
+    public int AreaId { get; set; } = 1;
+
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime? LastLoginAtUtc { get; set; }

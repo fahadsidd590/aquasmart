@@ -37,6 +37,7 @@ public sealed class AuthController(IUserRepository userRepository, ITokenService
             Email = request.Email.Trim(),
             EmailNormalized = request.Email.Trim().ToUpperInvariant(),
             Role = Roles.User,
+            AreaId = 0,
             CreatedAtUtc = DateTime.UtcNow,
             IsActive = true
         };
@@ -91,6 +92,7 @@ public sealed class AuthController(IUserRepository userRepository, ITokenService
         Email = user.Email,
         Role = user.Role,
         IsActive = user.IsActive,
+        AreaId = user.AreaId <= 0 ? 1 : user.AreaId,
         CreatedAtUtc = user.CreatedAtUtc,
         LastLoginAtUtc = user.LastLoginAtUtc
     };
