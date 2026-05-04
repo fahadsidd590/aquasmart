@@ -453,7 +453,21 @@ export default function DashboardScreen({ navigation }) {
           Filter Status: <Text style={styles.filterActive}>Active</Text>
         </Text>
       </TouchableOpacity>
-
+ {/* Quick Readings */}
+ <View style={styles.card}>
+        <Text style={styles.cardTitle}>Quick Readings</Text>
+        <View style={styles.quickReadingsGrid}>
+          <QuickReading label="pH Level" value={systemData.phLevel} unit="" icon="science" />
+          <QuickReading label="TDS" value={systemData.tds} unit="ppm" icon="science" />
+          <QuickReading label="Turbidity" value={systemData.turbidity} unit="NTU" icon="opacity" />
+          <QuickReading
+            label="Area ID"
+            value={sensorState?.areaId ?? 1}
+            unit=""
+            icon="place"
+          />
+        </View>
+      </View>
       {/* Safe range info (mini graph) */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Safe Ranges</Text>
@@ -488,21 +502,7 @@ export default function DashboardScreen({ navigation }) {
         ))}
       </View>
 
-      {/* Quick Readings */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Quick Readings</Text>
-        <View style={styles.quickReadingsGrid}>
-          <QuickReading label="pH Level" value={systemData.phLevel} unit="" icon="science" />
-          <QuickReading label="TDS" value={systemData.tds} unit="ppm" icon="science" />
-          <QuickReading label="Turbidity" value={systemData.turbidity} unit="NTU" icon="opacity" />
-          <QuickReading
-            label="Area ID"
-            value={sensorState?.areaId ?? 1}
-            unit=""
-            icon="place"
-          />
-        </View>
-      </View>
+     
 
       {/* System Status */}
       <View style={styles.card}>
