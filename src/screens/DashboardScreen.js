@@ -186,6 +186,41 @@ export default function DashboardScreen({ navigation }) {
     </View>
   );
 
+  const clampPercent = (n) => Math.max(0, Math.min(100, n));
+
+  const safeMetricRows = [
+    {
+      key: 'ph',
+      label: 'pH',
+      value: Number(systemData.phLevel),
+      display: `${systemData.phLevel}`,
+      target: '6.0 - 8.5',
+      safe: Number(systemData.phLevel) >= 6 && Number(systemData.phLevel) <= 8.5,
+      percent: clampPercent((Number(systemData.phLevel) / 14) * 100),
+      icon: 'science',
+    },
+    {
+      key: 'turbidity',
+      label: 'Turbidity',
+      value: Number(systemData.turbidity),
+      display: `${systemData.turbidity} NTU`,
+      target: '< 5 NTU',
+      safe: Number(systemData.turbidity) < 5,
+      percent: clampPercent((Number(systemData.turbidity) / 5) * 100),
+      icon: 'opacity',
+    },
+    {
+      key: 'tds',
+      label: 'TDS',
+      value: Number(systemData.tds),
+      display: `${systemData.tds} ppm`,
+      target: '< 500 ppm',
+      safe: Number(systemData.tds) < 500,
+      percent: clampPercent((Number(systemData.tds) / 500) * 100),
+      icon: 'science',
+    },
+  ];
+
   const WeatherIcon = ({ icon, size = 40 }) => {
     // Map OpenWeather icons to MaterialIcons
     const iconMap = {
@@ -418,6 +453,40 @@ export default function DashboardScreen({ navigation }) {
           Filter Status: <Text style={styles.filterActive}>Active</Text>
         </Text>
       </TouchableOpacity>
+
+      {/* Safe range info (mini graph) */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Safe Ranges</Text>
+        <Text style={styles.safeRangesHint}>
+          pH: 6.0-8.5, Turbidity: below 5 NTU, TDS: below 500 ppm
+        </Text>
+        {safeMetricRows.map((m) => (
+          <View key={m.key} style={styles.metricRangeRow}>
+            <View style={styles.metricRangeHeader}>
+              <View style={styles.metricRangeTitleWrap}>
+                <Icon name={m.icon} size={17} color={theme.colors.primary} />
+                <Text style={styles.metricRangeTitle}>{m.label}</Text>
+              </View>
+              <Text style={styles.metricRangeValue}>{m.display}</Text>
+            </View>
+            <View style={styles.metricRangeBarTrack}>
+              <View
+                style={[
+                  styles.metricRangeBarFill,
+                  { width: `${m.percent}%` },
+                  m.safe ? styles.metricRangeBarSafe : styles.metricRangeBarDanger,
+                ]}
+              />
+            </View>
+            <View style={styles.metricRangeFooter}>
+              <Text style={styles.metricRangeTarget}>Target: {m.target}</Text>
+              <Text style={[styles.metricRangeStatus, m.safe ? styles.safeText : styles.dangerText]}>
+                {m.safe ? 'Safe' : 'Out of range'}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
 
       {/* Quick Readings */}
       <View style={styles.card}>
@@ -712,6 +781,71 @@ const styles = StyleSheet.create({
   filterActive: {
     color: theme.colors.success,
     fontWeight: '600',
+  },
+  safeRangesHint: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginTop: -theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+  },
+  metricRangeRow: {
+    marginBottom: theme.spacing.md,
+  },
+  metricRangeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.xs,
+  },
+  metricRangeTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  metricRangeTitle: {
+    ...theme.typography.body,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  metricRangeValue: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  metricRangeBarTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#e9edf2',
+    overflow: 'hidden',
+  },
+  metricRangeBarFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  metricRangeBarSafe: {
+    backgroundColor: theme.colors.success,
+  },
+  metricRangeBarDanger: {
+    backgroundColor: theme.colors.danger,
+  },
+  metricRangeFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.xs,
+  },
+  metricRangeTarget: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+  },
+  metricRangeStatus: {
+    ...theme.typography.caption,
+    fontWeight: '700',
+  },
+  safeText: {
+    color: theme.colors.success,
+  },
+  dangerText: {
+    color: theme.colors.danger,
   },
   quickReadingsGrid: {
     flexDirection: 'row',
