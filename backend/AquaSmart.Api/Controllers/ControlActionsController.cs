@@ -1,12 +1,14 @@
 using AquaSmart.Api.Dtos;
 using AquaSmart.Api.Models;
 using AquaSmart.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AquaSmart.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class ControlActionsController(IControlActionRepository controlActionRepository) : ControllerBase
 {
     [HttpPost]

@@ -7,15 +7,21 @@ import {
   Switch,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, CommonActions } from '@react-navigation/native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
-import { getUser, clearSession } from '../services/authStorage';
+import { getUser, getToken, clearSession } from '../services/authStorage';
+import { apiRequest } from '../config/api';
+import { postControlAction } from '../services/pumpControl';
+
+const AUTOMATION_STORAGE_KEY = 'aquasmart_automation_settings';
 
 export default function SettingsScreen({ navigation }) {
   const [automationSettings, setAutomationSettings] = useState({
-    autoFill: true,
+    autoFill: false,
     smartScheduling: true,
     overflowProtection: true,
   });
@@ -27,6 +33,15 @@ export default function SettingsScreen({ navigation }) {
   });
 
   const [profile, setProfile] = useState(null);
+  const [pumpBusy, setPumpBusy] = useState(false);
+
+  const persistAutomation = useCallback(async (next) => {
+    try {
+      await AsyncStorage.setItem(AUTOMATION_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -34,6 +49,22 @@ export default function SettingsScreen({ navigation }) {
       (async () => {
         const u = await getUser();
         if (active) setProfile(u);
+        try {
+          const raw = await AsyncStorage.getItem(AUTOMATION_STORAGE_KEY);
+          if (active && raw) {
+            const parsed = JSON.parse(raw);
+            setAutomationSettings((prev) => ({
+              ...prev,
+              ...(typeof parsed.autoFill === 'boolean' ? { autoFill: parsed.autoFill } : {}),
+              ...(typeof parsed.smartScheduling === 'boolean' ? { smartScheduling: parsed.smartScheduling } : {}),
+              ...(typeof parsed.overflowProtection === 'boolean'
+                ? { overflowProtection: parsed.overflowProtection }
+                : {}),
+            }));
+          }
+        } catch {
+          /* ignore */
+        }
       })();
       return () => {
         active = false;
@@ -74,11 +105,111 @@ export default function SettingsScreen({ navigation }) {
     ]);
   };
 
-  const toggleAutomation = (key) => {
-    setAutomationSettings({
-      ...automationSettings,
-      [key]: !automationSettings[key],
-    });
+  const setAutomationKey = useCallback(
+    (key, value) => {
+      setAutomationSettings((prev) => {
+        const next = { ...prev, [key]: value };
+        void persistAutomation(next);
+        return next;
+      });
+    },
+    [persistAutomation]
+  );
+
+  const onAutoFillChange = useCallback(
+    async (value) => {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Sign in', 'Sign in to sync pump with Auto Fill Tank.');
+        return;
+      }
+      setAutomationSettings((prev) => {
+        const next = { ...prev, autoFill: value };
+        void persistAutomation(next);
+        return next;
+      });
+      try {
+        setPumpBusy(true);
+        if (value) {
+          let startPump = true;
+          try {
+            const data = await apiRequest('/api/area-sensor-state/current?areaId=1', { token });
+            const state = data?.data || data;
+            const wl = String(state?.waterLevel ?? state?.WaterLevel ?? '0').trim();
+            startPump = wl !== '1';
+          } catch {
+            startPump = true;
+          }
+          await postControlAction(token, 1, startPump ? 'pump start' : 'pump stop');
+        } else {
+          await postControlAction(token, 1, 'pump stop');
+        }
+      } catch (e) {
+        Alert.alert('Pump sync failed', e?.message || 'Could not update pump for area 1.');
+      } finally {
+        setPumpBusy(false);
+      }
+    },
+    [persistAutomation]
+  );
+
+  const pumpDeviceAreaId = async () => {
+    const u = await getUser();
+    return u?.areaId && u.areaId > 0 ? u.areaId : 1;
+  };
+
+  const onPumpStart = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Sign in', 'Sign in to control the pump.');
+        return;
+      }
+      setPumpBusy(true);
+      const areaId = await pumpDeviceAreaId();
+      await postControlAction(token, areaId, 'pump start');
+      Alert.alert('Pump', 'Start command saved.');
+    } catch (e) {
+      Alert.alert('Error', e?.message || 'Request failed');
+    } finally {
+      setPumpBusy(false);
+    }
+  };
+
+  const onPumpStop = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Sign in', 'Sign in to control the pump.');
+        return;
+      }
+      setPumpBusy(true);
+      const areaId = await pumpDeviceAreaId();
+      await postControlAction(token, areaId, 'pump stop');
+      Alert.alert('Pump', 'Stop command saved.');
+    } catch (e) {
+      Alert.alert('Error', e?.message || 'Request failed');
+    } finally {
+      setPumpBusy(false);
+    }
+  };
+
+  const onPurify = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Sign in', 'Sign in to run purify.');
+        return;
+      }
+      setPumpBusy(true);
+      const areaId = await pumpDeviceAreaId();
+      await postControlAction(token, areaId, 'purify cycle');
+      Alert.alert('Purify', 'Command logged (does not change pump on/off state).');
+    } catch (e) {
+      Alert.alert('Error', e?.message || 'Request failed');
+    } finally {
+      setPumpBusy(false);
+    }
   };
 
   const toggleAlert = (key) => {
@@ -88,7 +219,7 @@ export default function SettingsScreen({ navigation }) {
     });
   };
 
-  const AutomationItem = ({ title, description, value, onToggle }) => (
+  const AutomationItem = ({ title, description, value, onValueChange, switchDisabled }) => (
     <View style={styles.settingItem}>
       <View style={styles.settingInfo}>
         <Text style={styles.settingTitle}>{title}</Text>
@@ -96,7 +227,8 @@ export default function SettingsScreen({ navigation }) {
       </View>
       <Switch
         value={value}
-        onValueChange={onToggle}
+        onValueChange={onValueChange}
+        disabled={switchDisabled}
         trackColor={{ false: '#767577', true: theme.colors.primary }}
         thumbColor="#ffffff"
       />
@@ -115,12 +247,17 @@ export default function SettingsScreen({ navigation }) {
     </View>
   );
 
-const ControlButton = ({ title, icon, color }) => (
-  <TouchableOpacity style={[styles.controlButton, { backgroundColor: color }]}>
-    <Icon name={icon} size={24} color="#fff" />
-    <Text style={styles.controlButtonText}>{title}</Text>
-  </TouchableOpacity>
-);
+  const ControlButton = ({ title, icon, color, onPress, disabled }) => (
+    <TouchableOpacity
+      style={[styles.controlButton, { backgroundColor: color }, disabled && styles.controlButtonDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.8}
+    >
+      <Icon name={icon} size={24} color="#fff" />
+      <Text style={styles.controlButtonText}>{title}</Text>
+    </TouchableOpacity>
+  );
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
@@ -151,23 +288,24 @@ const ControlButton = ({ title, icon, color }) => (
         <Text style={styles.sectionTitle}>Automation Management</Text>
         <AutomationItem
           title="Auto Fill Tank"
-          description="Fill tank automatically when level is low"
+          description="Syncs pump for area 1: ON uses tank sensor (not full → start, full → stop); OFF stops pump"
           value={automationSettings.autoFill}
-          onToggle={() => toggleAutomation('autoFill')}
+          onValueChange={onAutoFillChange}
+          switchDisabled={pumpBusy}
         />
         <View style={styles.divider} />
         <AutomationItem
           title="Smart Scheduling"
           description="Optimize pump usage based on patterns"
           value={automationSettings.smartScheduling}
-          onToggle={() => toggleAutomation('smartScheduling')}
+          onValueChange={(v) => setAutomationKey('smartScheduling', v)}
         />
         <View style={styles.divider} />
         <AutomationItem
           title="Overflow Protection"
           description="Stop filling at 95% capacity"
           value={automationSettings.overflowProtection}
-          onToggle={() => toggleAutomation('overflowProtection')}
+          onValueChange={(v) => setAutomationKey('overflowProtection', v)}
         />
       </View>
 
@@ -196,21 +334,33 @@ const ControlButton = ({ title, icon, color }) => (
       {/* Manual Control */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Manual Control</Text>
+        {pumpBusy ? (
+          <View style={styles.pumpBusyRow}>
+            <ActivityIndicator color={theme.colors.primary} />
+            <Text style={styles.pumpBusyText}>Saving…</Text>
+          </View>
+        ) : null}
         <View style={styles.controlGrid}>
           <ControlButton
             title="Start Pump"
             icon="play-arrow"
             color={theme.colors.success}
+            onPress={onPumpStart}
+            disabled={pumpBusy}
           />
           <ControlButton
             title="Stop Pump"
             icon="stop"
             color={theme.colors.danger}
+            onPress={onPumpStop}
+            disabled={pumpBusy}
           />
           <ControlButton
             title="Purify"
             icon="clean-hands"
             color={theme.colors.info}
+            onPress={onPurify}
+            disabled={pumpBusy}
           />
         </View>
       </View>
@@ -288,6 +438,17 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: theme.colors.border,
   },
+  pumpBusyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  pumpBusyText: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+  },
   controlGrid: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -298,6 +459,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
+  },
+  controlButtonDisabled: {
+    opacity: 0.55,
   },
   controlButtonText: {
     color: '#fff',

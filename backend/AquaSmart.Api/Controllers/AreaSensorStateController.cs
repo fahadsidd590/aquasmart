@@ -36,7 +36,7 @@ public sealed class AreaSensorStateController(
         };
 
         var upserted = await repository.UpsertAsync(state, cancellationToken);
-        var pumpData = await ResolvePumpDataAsync(cancellationToken);
+        var pumpData = await ResolvePumpDataAsync(areaId, cancellationToken);
         return Ok(new AreaSensorStateWithPumpResponse
         {
             Data = upserted,
@@ -61,7 +61,7 @@ public sealed class AreaSensorStateController(
             return NotFound();
         }
 
-        var pumpData = await ResolvePumpDataAsync(cancellationToken);
+        var pumpData = await ResolvePumpDataAsync(normalizedAreaId, cancellationToken);
         return Ok(new AreaSensorStateWithPumpResponse
         {
             Data = state,
@@ -69,9 +69,9 @@ public sealed class AreaSensorStateController(
         });
     }
 
-    private async Task<int> ResolvePumpDataAsync(CancellationToken cancellationToken)
+    private async Task<int> ResolvePumpDataAsync(int pumpAreaId, CancellationToken cancellationToken)
     {
-        var latestAction = await controlActionRepository.GetLatestAsync(cancellationToken: cancellationToken);
+        var latestAction = await controlActionRepository.GetLatestForPumpAsync(pumpAreaId, cancellationToken);
         if (latestAction is null || string.IsNullOrWhiteSpace(latestAction.Action))
         {
             return 0;
