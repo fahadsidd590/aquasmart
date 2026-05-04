@@ -284,7 +284,7 @@ export default function SettingsScreen({ navigation }) {
       </View>
 
       {/* Automation Management */}
-      <View style={styles.card}>
+      {/* <View style={styles.card}>
         <Text style={styles.sectionTitle}>Automation Management</Text>
         <AutomationItem
           title="Auto Fill Tank"
@@ -307,12 +307,12 @@ export default function SettingsScreen({ navigation }) {
           value={automationSettings.overflowProtection}
           onValueChange={(v) => setAutomationKey('overflowProtection', v)}
         />
-      </View>
+      </View> */}
 
       {/* Alert Settings */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Alert Settings</Text>
-        <AlertItem
+        {/* <AlertItem
           title="Low Tank Level"
           enabled={alertSettings.lowTank}
           onToggle={() => toggleAlert('lowTank')}
@@ -323,7 +323,7 @@ export default function SettingsScreen({ navigation }) {
           enabled={alertSettings.poorQuality}
           onToggle={() => toggleAlert('poorQuality')}
         />
-        <View style={styles.divider} />
+        <View style={styles.divider} /> */}
         <AlertItem
           title="Filter Maintenance"
           enabled={alertSettings.filterMaintenance}
@@ -342,26 +342,26 @@ export default function SettingsScreen({ navigation }) {
         ) : null}
         <View style={styles.controlGrid}>
           <ControlButton
-            title="Start Pump"
+            title="Open Valve"
             icon="play-arrow"
             color={theme.colors.success}
             onPress={onPumpStart}
             disabled={pumpBusy}
           />
           <ControlButton
-            title="Stop Pump"
+            title="Stop Valve"
             icon="stop"
             color={theme.colors.danger}
             onPress={onPumpStop}
             disabled={pumpBusy}
           />
-          <ControlButton
+          {/* <ControlButton
             title="Purify"
             icon="clean-hands"
             color={theme.colors.info}
             onPress={onPurify}
             disabled={pumpBusy}
-          />
+          /> */}
         </View>
       </View>
     </ScrollView>

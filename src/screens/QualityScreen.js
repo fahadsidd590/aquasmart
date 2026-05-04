@@ -44,14 +44,14 @@ export default function QualityScreen() {
       const status = state?.status || 'Unknown';
       setQuality({
         status,
-        description: status === 'NOT_SAFE' ? 'Water is not safe for use' : 'Water quality within acceptable range',
-        decisionTitle: status === 'NOT_SAFE' ? 'Water Quality Alert' : 'Water Quality Approved',
+        description: status === 'false' ? 'Water is not safe for use' : 'Water quality within  range',
+        decisionTitle: status === 'false' ? 'Water Quality Alert' : 'Water Quality Approved',
         decisionDescription:
-          status === 'NOT_SAFE'
-            ? 'One or more values are outside acceptable range'
+          status === 'false'
+            ? 'One or more values are outside the range'
             : 'All values are in expected range',
         decisionUse:
-          status === 'NOT_SAFE'
+          status === 'false'
             ? 'Run treatment before using this water'
             : 'Suitable for non-potable use',
         areaId,
@@ -145,9 +145,9 @@ export default function QualityScreen() {
         <Text style={styles.cardTitle}>Overall Quality</Text>
         <View style={styles.overallQuality}>
           <Icon
-            name={quality.status === 'NOT_SAFE' ? 'error' : 'check-circle'}
+            name={quality.status === 'false' ? 'error' : 'check-circle'}
             size={40}
-            color={quality.status === 'NOT_SAFE' ? theme.colors.danger : theme.colors.success}
+            color={quality.status === 'false' ? theme.colors.danger : theme.colors.success}
           />
           <View style={styles.qualityContent}>
             <Text style={styles.qualityStatus}>{quality.status}</Text>
