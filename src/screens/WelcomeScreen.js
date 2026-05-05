@@ -25,9 +25,9 @@ export default function WelcomeScreen({ navigation }) {
             />
           </View>
           {/* <Text style={styles.title}>AquaSmart</Text> */}
-          <Text style={styles.subtitle}>
+          {/* <Text style={styles.subtitle}>
             IoT Based Water Harvesting System
-          </Text>
+          </Text> */}
         </View>
 
         {/* Tagline */}
@@ -52,13 +52,13 @@ export default function WelcomeScreen({ navigation }) {
             <Text style={styles.getStartedText}>Get Started</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.loginButton}
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.8}
           >
             <Text style={styles.loginText}>Login</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </View>
@@ -68,13 +68,13 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#5a8eff', // Solid blue background
+    backgroundColor: '#ffffffff', // Solid blue backgr  ound
     width: '100%',
   },
   contentContainer: {
     flex: 1,
     justifyContent: 'space-between',
-   // paddingVertical: theme.spacing.xl * 2,
+   //paddingVertical: theme.spacing.xl * 2,
     paddingHorizontal: theme.spacing.lg,
   },
   headerSection: {
@@ -82,50 +82,50 @@ const styles = StyleSheet.create({
    // marginTop: height * 0.1,
   },
   logoContainer: {
-   // width: 200,
-   // height: 200,
-    //borderRadius: 100,
+   //width: 500,
+   //height: 250,
+  //  borderRadius: 100,
     //backgroundColor: 'rgba(255, 255, 255, 0.2)',
-   // justifyContent: 'center',
-   // alignItems: 'center',
-    //marginBottom: theme.spacing.lg,
-   // borderWidth: 3,
-   // borderColor: 'rgba(255, 255, 255, 0.3)',
+   //justifyContent: 'space-around',
+  //alignItems: 'center',
+  //  marginBottom: theme.spacing.lg,
+   //borderWidth: 3,
+   //borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   logoImage: {
-    width: 280,
-    height:280,
+  //  width: 380,
+    //height:500,
   },
   title: {
-    ...theme.typography.h1,
-    fontSize: 42,
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: theme.spacing.sm,
+   // ...theme.typography.h1,
+   // fontSize: 42,
+   // color: '#fff',
+   // textAlign: 'center',
+   // marginBottom: theme.spacing.sm,
   },
   subtitle: {
     ...theme.typography.h2,
     fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: theme.spacing.md,
-    lineHeight: 24,
+    color: '#005485',
+    textAlign: 'start',
+    //marginBottom: theme.spacing.md,
+    //lineHeight: 24,
     opacity: 0.95,
   },
   taglineContainer: {
-    alignItems: 'center',
+    // alignItems: 'center',
   },
   description: {
-    ...theme.typography.body,
+   // ...theme.typography.body,
     fontSize: 20,
-    color: '#fff',
+    color: '#5AAFC1',
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
+   //marginBottom: theme.spacing.xl,
     fontWeight: '600',
   },
   waterDropContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.lg,
+   // gap: theme.spacing.lg,
   },
   waterDrop: {
     fontSize: 32,
@@ -136,13 +136,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   getStartedButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#5AAFC1',
     paddingVertical: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
   },
   getStartedText: {
-    color: '#1a73e8',
+    color: '#f8f8f8ff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -152,10 +152,10 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: '#5AAFC1',
   },
   loginText: {
-    color: '#fff',
+    color: '#5AAFC1',
     fontSize: 18,
     fontWeight: 'bold',
   },
