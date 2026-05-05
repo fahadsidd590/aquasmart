@@ -25,8 +25,8 @@ export default function MainTabNavigator() {
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarStyle: {
-          backgroundColor: '#1a73e8',
-          borderTopColor: '#1a73e8',
+          backgroundColor: '#5AAFC1',
+          borderTopColor: '#5AAFC1',
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
@@ -38,7 +38,7 @@ export default function MainTabNavigator() {
           fontWeight: '600',
         },
         headerStyle: {
-          backgroundColor: '#1a73e8',
+          backgroundColor: '#5AAFC1',
           elevation: 0,
           shadowOpacity: 0,
         },

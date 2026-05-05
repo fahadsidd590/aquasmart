@@ -10,7 +10,7 @@ export default function SettingsStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#1a73e8',
+          backgroundColor: '#5AAFC1',
           elevation: 0,
           shadowOpacity: 0,
         },
