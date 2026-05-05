@@ -18,11 +18,15 @@ export default function WelcomeScreen({ navigation }) {
         {/* Header/Logo Section */}
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
-            <Image
+          <Image
               source={require('../../assets/logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
+            
+              <Text style={styles.description}>
+            Monitor, Control & Save Water Intelligently
+          </Text>
           </View>
           {/* <Text style={styles.title}>AquaSmart</Text> */}
           {/* <Text style={styles.subtitle}>
@@ -32,10 +36,10 @@ export default function WelcomeScreen({ navigation }) {
 
         {/* Tagline */}
         <View style={styles.taglineContainer}>
-          <Text style={styles.description}>
+         {/*  <Text style={styles.description}>
             Monitor, Control & Save Water Intelligently
           </Text>
-          {/* <View style={styles.waterDropContainer}>
+          <View style={styles.waterDropContainer}>
             <Text style={styles.waterDrop}>💧</Text>
             <Text style={styles.waterDrop}>💧</Text>
             <Text style={styles.waterDrop}>💧</Text>
@@ -73,13 +77,13 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+   justifyContent: 'space-between',
    //paddingVertical: theme.spacing.xl * 2,
     paddingHorizontal: theme.spacing.lg,
   },
   headerSection: {
     alignItems: 'center',
-   // marginTop: height * 0.1,
+    marginTop: height * 0.1,
   },
   logoContainer: {
    //width: 500,
@@ -120,6 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#5AAFC1',
     textAlign: 'center',
+    marginTop: theme.spacing.xl,
    //marginBottom: theme.spacing.xl,
     fontWeight: '600',
   },
@@ -133,6 +138,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     gap: theme.spacing.md,
+   // marginTop: theme.spacing.xl,  
     marginBottom: theme.spacing.xl,
   },
   getStartedButton: {
